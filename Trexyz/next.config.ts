@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === "production";
+// BUILD_TARGET=static genera un sitio estático (carpeta "out") para Cloudflare.
+// Sin esa variable se genera la versión "standalone" que usa Docker.
+const isStatic = process.env.BUILD_TARGET === "static";
 
 // Política de contenido: solo se permite cargar recursos del propio sitio.
 // - 'unsafe-inline' en script-src es necesario porque Next.js inserta scripts en línea para
@@ -38,14 +41,12 @@ const nextConfig: NextConfig = {
   // Permite abrir el servidor de desarrollo desde otros dispositivos de la red local (ej. el celular).
   // Sin esto, Next.js bloquea los scripts y la página queda cargando para siempre.
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
-  // Genera una carpeta mínima y autosuficiente para la imagen de Docker.
-  output: "standalone",
+  // "export": archivos HTML/CSS/JS listos para Cloudflare. "standalone": servidor mínimo para Docker.
+  output: isStatic ? "export" : "standalone",
   // No revela con qué tecnología está hecho el sitio (cabecera X-Powered-By).
   poweredByHeader: false,
   // No publica el código fuente original en producción.
   productionBrowserSourceMaps: false,
-  cacheComponents: true,
-  partialPrefetching: true,
   turbopack: {
     rules: {
       "*.css": {
@@ -54,9 +55,14 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
-  },
+  // En el sitio estático las cabeceras no las aplica Next.js sino Cloudflare, leyendo public/_headers.
+  ...(isStatic
+    ? {}
+    : {
+        async headers() {
+          return [{ source: "/:path*", headers: securityHeaders }];
+        },
+      }),
 };
 
 export default nextConfig;
