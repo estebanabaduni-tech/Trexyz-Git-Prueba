@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        # Se lee con: docker compose --env-file .env.local up --build
+        NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
