@@ -15,8 +15,8 @@ const TIPOS = [
 const MATERIALES = ["PLA", "PETG", "ABS / ASA", "TPU flexible", "No sé"] as const;
 
 const MAX_NOMBRE = 80;
-const MAX_CANTIDAD = 500;
-const MAX_DETALLES = 3000;
+const MAX_CANTIDAD = 300; // hay una sola impresora 3D
+const MAX_DETALLES = 1500;
 const COOLDOWN_MS = 15_000; // evita envíos repetidos seguidos
 
 const field =
@@ -87,7 +87,10 @@ export function QuoteForm() {
           />
         </label>
         <label className="grid gap-1.5 text-sm text-muted-foreground">
-          Cantidad
+          <span className="flex items-baseline justify-between gap-2">
+            Cantidad
+            <span className="text-xs text-muted-foreground/80">máx. {MAX_CANTIDAD}</span>
+          </span>
           <input name="cantidad" type="number" min={1} max={MAX_CANTIDAD} step={1} defaultValue={1} required inputMode="numeric" className={field} />
         </label>
       </div>
@@ -110,7 +113,12 @@ export function QuoteForm() {
         </label>
       </div>
       <label className="grid gap-1.5 text-sm text-muted-foreground">
-        Contanos tu idea (medidas, colores, uso…)
+        <span className="flex items-baseline justify-between gap-2">
+          <span>Contanos tu idea (medidas, colores, uso…)</span>
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground/80" aria-live="polite">
+            {detallesLen}/{MAX_DETALLES}
+          </span>
+        </span>
         <textarea
           name="detalles"
           rows={4}
@@ -119,9 +127,6 @@ export function QuoteForm() {
           onChange={(e) => setDetallesLen(e.currentTarget.value.length)}
           className={field}
         />
-        <span className="text-right text-xs text-muted-foreground/80">
-          {detallesLen}/{MAX_DETALLES}
-        </span>
       </label>
 
       {/* Campo trampa anti-bots: oculto para personas y lectores de pantalla. */}

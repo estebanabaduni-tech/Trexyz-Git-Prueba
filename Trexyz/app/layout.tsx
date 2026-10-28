@@ -13,6 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
   title: "TREXYZ 3D · Impresiones 3D a medida",
   description:
     "Impresión 3D bajo pedido: prototipos, piezas funcionales, regalos y series cortas. Cotizá gratis y recibí tu pieza en tu casa.",
