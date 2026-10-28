@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { WHATSAPP_NUMBER } from "@/lib/config";
-import { cleanLine, cleanText, clampInt, pickAllowed } from "@/lib/sanitize";
+import { cleanName, cleanText, clampInt, filterNameInput, pickAllowed } from "@/lib/sanitize";
 
 const TIPOS = [
   "Prototipo",
@@ -15,14 +15,16 @@ const TIPOS = [
 const MATERIALES = ["PLA", "PETG", "ABS / ASA", "TPU flexible", "No sé"] as const;
 
 const MAX_NOMBRE = 80;
-const MAX_DETALLES = 800;
+const MAX_CANTIDAD = 500;
+const MAX_DETALLES = 3000;
 const COOLDOWN_MS = 15_000; // evita envíos repetidos seguidos
 
 const field =
   "w-full rounded-xl border border-input bg-secondary/60 px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/70 outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 export function QuoteForm() {
-  const [status, setStatus] = useState<"idle" | "sent" | "wait">("idle");
+  const [status, setStatus] = useState<"idle" | "sent" | "wait" | "name">("idle");
+  const [detallesLen, setDetallesLen] = useState(0);
   const lastSubmit = useRef(0);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -40,11 +42,14 @@ export function QuoteForm() {
       return;
     }
 
-    const nombre = cleanLine(d.get("nombre"), MAX_NOMBRE);
-    if (!nombre) return;
+    const nombre = cleanName(d.get("nombre"), MAX_NOMBRE);
+    if (!nombre) {
+      setStatus("name");
+      return;
+    }
     const tipo = pickAllowed(d.get("tipo"), TIPOS, TIPOS[0]);
     const material = pickAllowed(d.get("material"), MATERIALES, MATERIALES[0]);
-    const cantidad = clampInt(d.get("cantidad"), 1, 10_000);
+    const cantidad = clampInt(d.get("cantidad"), 1, MAX_CANTIDAD);
     const detalles = cleanText(d.get("detalles"), MAX_DETALLES);
 
     const text = [
@@ -66,11 +71,24 @@ export function QuoteForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5 text-sm text-muted-foreground">
           Nombre
-          <input name="nombre" required maxLength={MAX_NOMBRE} autoComplete="name" placeholder="Tu nombre" className={field} />
+          <input
+            name="nombre"
+            required
+            maxLength={MAX_NOMBRE}
+            autoComplete="name"
+            placeholder="Tu nombre"
+            // Solo letras, espacios, apóstrofe, punto y guion (sin números ni símbolos).
+            pattern="[\p{L}\p{M} '’.\-]+"
+            title="Solo letras: sin números ni símbolos."
+            onInput={(e) => {
+              e.currentTarget.value = filterNameInput(e.currentTarget.value, MAX_NOMBRE);
+            }}
+            className={field}
+          />
         </label>
         <label className="grid gap-1.5 text-sm text-muted-foreground">
           Cantidad
-          <input name="cantidad" type="number" min={1} max={10000} step={1} defaultValue={1} required inputMode="numeric" className={field} />
+          <input name="cantidad" type="number" min={1} max={MAX_CANTIDAD} step={1} defaultValue={1} required inputMode="numeric" className={field} />
         </label>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -98,8 +116,12 @@ export function QuoteForm() {
           rows={4}
           maxLength={MAX_DETALLES}
           placeholder="Podés adjuntar el archivo STL por WhatsApp después."
+          onChange={(e) => setDetallesLen(e.currentTarget.value.length)}
           className={field}
         />
+        <span className="text-right text-xs text-muted-foreground/80">
+          {detallesLen}/{MAX_DETALLES}
+        </span>
       </label>
 
       {/* Campo trampa anti-bots: oculto para personas y lectores de pantalla. */}
@@ -125,6 +147,7 @@ export function QuoteForm() {
       )}
       <p className="text-center text-sm text-muted-foreground" role="status">
         {status === "sent" && "¡Listo! Se abrió WhatsApp con tu consulta."}
+        {status === "name" && "Escribí tu nombre usando solo letras."}
         {status === "wait" && "Ya enviaste una consulta hace un momento. Esperá unos segundos para enviar otra."}
         {status === "idle" && "Sin compromiso. Te respondemos por WhatsApp."}
       </p>

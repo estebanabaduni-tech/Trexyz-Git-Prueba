@@ -39,3 +39,22 @@ export function clampInt(value: unknown, min: number, max: number): number {
   if (!Number.isFinite(n)) return min;
   return Math.min(max, Math.max(min, n));
 }
+
+// Letras de cualquier idioma (con tildes y ñ), espacios, apóstrofe, punto y guion. Nada de números ni símbolos.
+const NOT_NAME_CHARS = /[^\p{L}\p{M} '’.-]/gu;
+
+/** Nombre: solo texto. Quita números, símbolos y emojis; colapsa espacios y limita el largo. */
+export function cleanName(value: unknown, max: number): string {
+  return String(value ?? "")
+    .normalize("NFC")
+    .replace(NOT_NAME_CHARS, "")
+    .replace(/\s+/g, " ")
+    .trimStart()
+    .slice(0, max)
+    .trimEnd();
+}
+
+/** Filtro mientras se escribe: igual que cleanName pero conserva el espacio final para poder seguir tipeando. */
+export function filterNameInput(value: string, max: number): string {
+  return value.normalize("NFC").replace(NOT_NAME_CHARS, "").replace(/\s{2,}/g, " ").replace(/^\s+/, "").slice(0, max);
+}
